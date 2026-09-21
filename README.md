@@ -1,93 +1,51 @@
-# Key-Value Graph Construction Service
+# keyvalue-graph-builder
 
+> Key-Value 그래프 기반 데이터 구조 분석 및 값 정규화 그래프 구축
 
+## 개요
 
-## Getting started
-
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
-
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
-
-## Add your files
-
-* [Create](https://docs.gitlab.com/user/project/repository/web_editor/#create-a-file) or [upload](https://docs.gitlab.com/user/project/repository/web_editor/#upload-a-file) files
-* [Add files using the command line](https://docs.gitlab.com/topics/git/add_files/#add-files-to-a-git-repository) or push an existing Git repository with the following command:
+도메인 스키마를 모르는 이기종 데이터를 **Key-Value 그래프**로 구조화한다. 필드명·값을
+노드로 올리고 표기가 다른 값을 대표값으로 정규화해, 값을 공유하는 레코드 사이의 관계
+후보를 찾는다.
 
 ```
-cd existing_repo
-git remote add origin https://gitlab.com/wisenut-research/research/2024-iitp-3rd-party-data/keyvalue-graph-construction-service.git
-git branch -M main
-git push -uf origin main
+Document ─HAS_KEY→ Key ─HAS_VALUE→ Value ─SAME_AS→ NormalizedValue
+                                     └─EXTRACTED_FROM→ Document
 ```
 
-## Integrate with your tools
+| 단계 | 모듈 | 하는 일 |
+|---|---|---|
+| 스키마 분석 | `schema_analyzer` | 필드 통계·타입·추출 대상 판별 |
+| KV 추출 | `llm_based_loader` | 레코드 → Key/Value 쌍 |
+| 고유명사 라벨링 | `proper_noun_labeler` | 분류체계 태깅 |
+| 값 정규화 | `clustering_normalizer` | 표기 변형 → 대표값 |
+| 그래프 적재 | `neptune_graph_builder` | Neptune(RDF) + OpenSearch 색인 |
+| 관계 후보 | `relation_candidate_finder` | 공유 값 기반 후보 탐색 |
 
-* [Set up project integrations](https://gitlab.com/wisenut-research/research/2024-iitp-3rd-party-data/keyvalue-graph-construction-service/-/settings/integrations)
+## 실행
 
-## Collaborate with your team
+```bash
+uv sync --all-groups
+cp .env.example .env    # 접속 정보 입력
+uv run fastapi dev app/main.py
+```
 
-* [Invite team members and collaborators](https://docs.gitlab.com/user/project/members/)
-* [Create a new merge request](https://docs.gitlab.com/user/project/merge_requests/creating_merge_requests/)
-* [Automatically close issues from merge requests](https://docs.gitlab.com/user/project/issues/managing_issues/#closing-issues-automatically)
-* [Enable merge request approvals](https://docs.gitlab.com/user/project/merge_requests/approvals/)
-* [Set auto-merge](https://docs.gitlab.com/user/project/merge_requests/auto_merge/)
+## 주요 API
 
-## Test and Deploy
+| 메서드 | 경로 | 설명 |
+|---|---|---|
+| POST | `/keyvalue-graph/analyze-schema` | 스키마 분석 |
+| POST | `/keyvalue-graph/build` | KV 그래프 생성·적재 |
+| POST | `/keyvalue-graph/normalize` | 값 클러스터 정규화 |
+| POST | `/keyvalue-graph/relations` | 레코드 관계 후보 탐색 |
+| POST | `/workflow/execute` | 파일 업로드 → 전 과정 실행 (SSE) |
 
-Use the built-in continuous integration in GitLab.
+## 연계 모듈
 
-* [Get started with GitLab CI/CD](https://docs.gitlab.com/ci/quick_start/)
-* [Analyze your code for known vulnerabilities with Static Application Security Testing (SAST)](https://docs.gitlab.com/user/application_security/sast/)
-* [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/topics/autodevops/requirements/)
-* [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/user/clusters/agent/)
-* [Set up protected environments](https://docs.gitlab.com/ci/environments/protected_environments/)
+레코드 관계 후보 탐색 범위는 [dataset-relation-generator](../dataset-relation-generator) 가
+생성한 데이터셋 간 관계(Level 1)로 좁힌다(`level1_gating`). Neptune 질의로만 연결되며
+코드 의존은 없고, Level 1 관계가 없으면 자기 데이터셋 안에서만 탐색한다.
 
-***
+## 라이선스
 
-# Editing this README
-
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!). Thanks to [makeareadme.com](https://www.makeareadme.com/) for this template.
-
-## Suggestions for a good README
-
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
-
-## Name
-Choose a self-explaining name for your project.
-
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
-
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
-
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
-
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
-
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
-
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
+Apache License 2.0 — [LICENSE](LICENSE)

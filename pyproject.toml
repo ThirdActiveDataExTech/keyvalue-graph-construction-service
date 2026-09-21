@@ -1,0 +1,186 @@
+[project]
+authors = [
+    { name = "Seoyeon Park", email = "sally9476@wisenut.co.kr" },
+]
+maintainers = [
+    { name = "Chanhyeong Lee", email = "wisnt65@wisenut.co.kr" },
+    { name = "Hyeok Jang", email = "wath1457@wisenut.co.kr" },
+    { name = "Youngwoo Choi", email = "uoise@wisenut.co.kr" },
+]
+license = "Apache-2.0"
+requires-python = "<3.13,>=3.10"
+dependencies = [
+    "fastapi[standard]<=0.115.0",
+    "loguru<1.0.0,>=0.7.2",
+    "pyyaml<7.0.0,>=6.0.2",
+    "pydantic-settings<3.0.0,>=2.5.2",
+    "pydantic>=2.10.4",
+    "langfuse>=3.9.3",
+    "logging>=0.4.9.6",
+    "langchain-openai>=1.0.2",
+    "langgraph>=1.0.3",
+    "langchain>=1.0.5",
+    "pytest>=8.3.5",
+    "tabulate>=0.9.0",
+    "setuptools>=77.0.3",
+    "ruff>=0.11.6",
+    "sentence-transformers>=5.2.0",
+    "httpx>=0.28.1",
+    "rapidfuzz>=3.0.0",
+    "scikit-learn>=1.3.0",
+    "numpy>=1.24.0",
+    "rdflib>=7.0.0",
+    "boto3>=1.42.97",
+    "botocore>=1.42.97",
+    "opensearch-py>=3.2.0",
+]
+name = "keyvalue-graph-builder"
+version = "v1"
+description = "Key-Value 그래프 기반 데이터 구조 분석 및 값 정규화 그래프 구축"
+readme = "README.md"
+keywords = [
+    "metadata",
+    "knowledge-graph",
+    "data-relation",
+    "llm",
+    "fastapi",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Framework :: AsyncIO",
+    "Framework :: FastAPI",
+    "Framework :: Pytest",
+    "Natural Language :: Korean",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Internet :: WWW/HTTP",
+    "Intended Audience :: Developers",
+]
+excludes = [
+    ".gitlab-ci.yml",
+]
+
+[dependency-groups]
+lint = [
+    "ruff>=0.11.6",
+    "pyright>=1.1.397",
+    "pre-commit>=4.0.1,<5.0.0",
+]
+test = [
+    "pytest<9.0.0,>=8.3.3",
+    "pytest-cov>=5.0.0,<6.0.0",
+    "setuptools>=77.0.3",
+    "tabulate<1.0.0,>=0.9.0",
+]
+gunicorn = [
+    "gunicorn<24.0.0,>=23.0.0",
+]
+db = [
+]
+dev = [
+    "mypy>=2.1.0",
+    "openpyxl>=3.1.5",
+    "pandas>=2.3.3",
+]
+
+[tool.uv]
+default-groups = ["db"]
+
+[tool.setuptools]
+py-modules = ["app"]
+
+
+[tool.ruff]
+line-length = 125
+exclude = [
+    '.git',
+    '__pycache__',
+    '.ruff_cache',
+    'docs',
+    'venv',
+    'tests',
+    'build',
+    'dist',
+    './app/__init__.py',
+    'gunicorn.conf.py'
+]
+target-version = "py311"
+
+[tool.ruff.lint]
+select = [
+    "D", # pydocstyle <https://docs.astral.sh/ruff/rules/#pydocstyle-d>
+    "FAST"  # FastAPI <https://docs.astral.sh/ruff/rules/#fastapi-fast>
+]
+ignore = ['W', "D100", "D104", "D414", "D415", "D417"]
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.extend-per-file-ignores]
+"!app/src/**.py" = ["D"]    # apply `D` rules only in app/src directory
+
+[tool.ruff.lint.mccabe]
+max-complexity = 10
+
+
+[tool.pyright]
+pythonVersion = "3.11"
+defineConstant = { DEBUG = true }
+reportMissingImports = false
+reportMissingTypeStubs = false
+reportArgumentType = false
+typeCheckingMode = "basic"
+include = ["app"]
+exclude = [
+    '.git',
+    '__pycache__',
+    '.ruff_cache',
+    '.pytest_cache',
+    'docs',
+    'venv',
+    '.venv',
+    'tests',
+    'build',
+    'dist',
+    'pypi',
+    'logs',
+    'gunicorn.conf.py',
+    '.cache'
+]
+
+
+[tool.pytest.ini_options]
+addopts = [
+    "--strict-markers",
+    "--strict-config",
+    "--verbose",
+    "--cov=app",
+    "--cov-report=xml:coverage.xml",
+    "--cov-report=term",
+    "--junit-xml=report.xml",
+]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "app/*.py",
+    "*/__init__.py",
+    "app/api/examples/*.py",
+    "app/exceptions/*.py",
+]
+
+[tool.coverage.xml]
+output = "coverage.xml"
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+]
